@@ -7,15 +7,16 @@ import (
 	"os"
 
 	"github.com/pkg/errors"
-	"github.com/snyk/cli/cliv2/internal/cliv2"
-	"github.com/snyk/cli/cliv2/internal/constants"
-	"github.com/snyk/cli/cliv2/internal/proxy"
 	"github.com/snyk/go-application-framework/pkg/auth"
 	"github.com/snyk/go-application-framework/pkg/configuration"
 	pkg_utils "github.com/snyk/go-application-framework/pkg/utils"
 	"github.com/snyk/go-application-framework/pkg/workflow"
 	"github.com/snyk/go-httpauth/pkg/httpauth"
 	"github.com/spf13/pflag"
+
+	"github.com/snyk/cli/cliv2/internal/cliv2"
+	"github.com/snyk/cli/cliv2/internal/constants"
+	"github.com/snyk/cli/cliv2/internal/proxy"
 )
 
 var WORKFLOWID_LEGACY_CLI workflow.Identifier = workflow.NewWorkflowIdentifier("legacycli")
@@ -29,6 +30,7 @@ func Init(engine workflow.Engine) error {
 	flagset := pflag.NewFlagSet("legacycli", pflag.ContinueOnError)
 	flagset.StringSlice(configuration.RAW_CMD_ARGS, os.Args[1:], "Command line arguments for the legacy CLI.")
 	flagset.Bool(configuration.WORKFLOW_USE_STDIO, false, "Use StdIn and StdOut")
+	flagset.String(configuration.WORKING_DIRECTORY, "", "CLI working directory")
 
 	config := workflow.ConfigurationOptionsFromFlagset(flagset)
 	entry, _ := engine.Register(WORKFLOWID_LEGACY_CLI, config, legacycliWorkflow)
@@ -53,6 +55,8 @@ func legacycliWorkflow(
 	output = []workflow.Data{}
 	var outBuffer bytes.Buffer
 	var errBuffer bytes.Buffer
+	var outWriter *bufio.Writer
+	var errWriter *bufio.Writer
 
 	config := invocation.GetConfiguration()
 	debugLogger := invocation.GetLogger()
@@ -63,18 +67,29 @@ func legacycliWorkflow(
 	useStdIo := config.GetBool(configuration.WORKFLOW_USE_STDIO)
 	isDebug := config.GetBool(configuration.DEBUG)
 	cacheDirectory := config.GetString(configuration.CACHE_PATH)
+	workingDirectory := config.GetString(configuration.WORKING_DIRECTORY)
 	insecure := config.GetBool(configuration.INSECURE_HTTPS)
 	proxyAuthenticationMechanismString := config.GetString(configuration.PROXY_AUTHENTICATION_MECHANISM)
 	proxyAuthenticationMechanism := httpauth.AuthenticationMechanismFromString(proxyAuthenticationMechanismString)
+	analyticsDisabled := config.GetBool(configuration.ANALYTICS_DISABLED)
 
 	debugLogger.Println("Arguments:", args)
 	debugLogger.Println("Use StdIO:", useStdIo)
+	debugLogger.Println("Working directory:", workingDirectory)
 
 	// init cli object
 	var cli *cliv2.CLI
 	cli, err = cliv2.NewCLIv2(cacheDirectory, debugLogger)
 	if err != nil {
 		return output, err
+	}
+
+	cli.WorkingDirectory = workingDirectory
+
+	// ensure to disable analytics based on configuration
+	if _, exists := os.LookupEnv(constants.SNYK_ANALYTICS_DISABLED_ENV); !exists && analyticsDisabled {
+		env := []string{constants.SNYK_ANALYTICS_DISABLED_ENV + "=1"}
+		cli.AppendEnvironmentVariables(env)
 	}
 
 	if oauthIsAvailable {
@@ -102,9 +117,9 @@ func legacycliWorkflow(
 
 	if useStdIo == false {
 		in := bytes.NewReader([]byte{})
-		out := bufio.NewWriter(&outBuffer)
-		err := bufio.NewWriter(&errBuffer)
-		cli.SetIoStreams(in, out, err)
+		outWriter = bufio.NewWriter(&outBuffer)
+		errWriter = bufio.NewWriter(&errBuffer)
+		cli.SetIoStreams(in, outWriter, errWriter)
 	}
 
 	// init proxy object
@@ -132,11 +147,19 @@ func legacycliWorkflow(
 	err = cli.Execute(proxyInfo, FilteredArgs(args))
 
 	if !useStdIo {
+		outWriter.Flush()
+		errWriter.Flush()
+
 		if isDebug {
 			debugLogger.Println(errBuffer.String())
 		}
 
-		data := workflow.NewData(DATATYPEID_LEGACY_CLI_STDOUT, "text/plain", outBuffer.Bytes())
+		contentType := "text/plain"
+		if pkg_utils.Contains(args, "--json") || pkg_utils.Contains(args, "--sarif") {
+			contentType = "application/json"
+		}
+
+		data := workflow.NewData(DATATYPEID_LEGACY_CLI_STDOUT, contentType, outBuffer.Bytes())
 		output = append(output, data)
 	}
 
