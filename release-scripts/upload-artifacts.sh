@@ -9,11 +9,13 @@ declare -a StaticFiles=(
   "binary-releases/snyk-linux"
   "binary-releases/snyk-linux-arm64"
   "binary-releases/snyk-macos"
+  "binary-releases/snyk-macos-arm64"
   "binary-releases/snyk-win.exe"
   "binary-releases/snyk-alpine.sha256"
   "binary-releases/snyk-linux.sha256"
   "binary-releases/snyk-linux-arm64.sha256"
   "binary-releases/snyk-macos.sha256"
+  "binary-releases/snyk-macos-arm64.sha256"
   "binary-releases/snyk-win.exe.sha256"
   "binary-releases/sha256sums.txt.asc"
 )
@@ -76,7 +78,7 @@ upload_github() {
       --target "${CIRCLE_SHA1}" \
       --title "${VERSION_TAG}" \
       --notes-file binary-releases/RELEASE_NOTES.md
-    
+
     echo "DRY RUN: deleting draft from GitHub..."
     gh release delete "${VERSION_TAG}" \
       --yes
@@ -113,7 +115,7 @@ trigger_build_snyk_images() {
     -H "Authorization: Bearer $HAMMERHEAD_GITHUB_PAT" \
     -H "X-GitHub-Api-Version: 2022-11-28" \
     https://api.github.com/repos/snyk/snyk-images/dispatches \
-    -d '{"event_type":"build_and_push_images"}' \
+    -d "{\"event_type\":\"build_and_push_images\", \"client_payload\": {\"version\": \"$VERSION_TAG\"}}" \
     -w "%{http_code}" \
     -o /dev/null)
   if [ "$RESPONSE" -eq 204 ]; then
@@ -205,9 +207,9 @@ for arg in "${@}"; do
   # Trigger building Snyk images in snyk-images repository
   elif [ "${arg}" == "trigger-snyk-images" ]; then
     trigger_build_snyk_images
-  
+
   # Upload files to S3 bucket
   else
     upload_s3 "${target}"
-  fi  
+  fi
 done
