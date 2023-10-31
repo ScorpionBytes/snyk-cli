@@ -87,15 +87,11 @@ ${vuln.description}`.replace(/##\s/g, '# '),
             // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
             testResult.packageManager!,
           ],
-          cvssv3_baseScore: (vuln as CvssScore).cvssScore,
+          cvssv3_baseScore: vuln.cvssScore,
         },
       };
     },
   );
-}
-
-interface CvssScore {
-  cvssScore: number;
 }
 
 function getIntroducedThrough(vuln: AnnotatedIssue) {
