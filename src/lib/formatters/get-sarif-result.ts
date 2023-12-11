@@ -2,9 +2,9 @@ import * as sarif from 'sarif';
 import * as groupBy from 'lodash.groupby';
 import * as map from 'lodash.map';
 
-import { SEVERITY, AnnotatedIssue } from '../snyk-test/legacy';
+import { SEVERITY, TestResult, AnnotatedIssue } from '../snyk-test/legacy';
 
-export function getResults(testResult): sarif.Result[] {
+export function getResults(testResult: TestResult): sarif.Result[] {
   const groupedVulnerabilities = groupBy(testResult.vulnerabilities, 'id');
   return map(
     groupedVulnerabilities,
@@ -20,7 +20,7 @@ export function getResults(testResult): sarif.Result[] {
             artifactLocation: {
               uri: getArtifactLocationUri(
                 testResult.displayTargetFile,
-                testResult.path,
+                (testResult as any).path,
               ),
             },
             region: {
@@ -61,7 +61,7 @@ export function getLevel(vuln: AnnotatedIssue) {
   }
 }
 
-function getArtifactLocationUri(targetFile: string, path: string): string {
+function getArtifactLocationUri(targetFile: string | undefined, path: string): string {
   if (targetFile) {
     return targetFile;
   }
