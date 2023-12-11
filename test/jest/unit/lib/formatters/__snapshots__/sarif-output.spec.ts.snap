@@ -30,7 +30,7 @@ Object {
             "text": "This file introduces a vulnerable expat package with a critical severity vulnerability.",
           },
           "properties": Object {
-            "cvssv3_baseScore": null,
+            "cvssv3_baseScore": 7.5,
           },
           "ruleId": "SNYK-LINUX-EXPAT-450908",
         },
@@ -73,6 +73,7 @@ In libexpat in Expat before 2.2.7, XML input including XML names that contain a 
               },
               "id": "SNYK-LINUX-EXPAT-450908",
               "properties": Object {
+                "cvssv3_baseScore": 7.5,
                 "tags": Array [
                   "security",
                   "CWE-611",
@@ -122,7 +123,7 @@ Object {
             "text": "This file introduces a vulnerable expat package with a critical severity vulnerability.",
           },
           "properties": Object {
-            "cvssv3_baseScore": null,
+            "cvssv3_baseScore": 7.5,
           },
           "ruleId": "SNYK-LINUX-EXPAT-450908",
         },
@@ -165,6 +166,7 @@ In libexpat in Expat before 2.2.7, XML input including XML names that contain a 
               },
               "id": "SNYK-LINUX-EXPAT-450908",
               "properties": Object {
+                "cvssv3_baseScore": 7.5,
                 "tags": Array [
                   "security",
                   "npm",
@@ -213,7 +215,7 @@ Object {
             "text": "This file introduces a vulnerable expat package with a high severity vulnerability.",
           },
           "properties": Object {
-            "cvssv3_baseScore": null,
+            "cvssv3_baseScore": 7.5,
           },
           "ruleId": "SNYK-LINUX-EXPAT-450908",
         },
@@ -256,6 +258,7 @@ In libexpat in Expat before 2.2.7, XML input including XML names that contain a 
               },
               "id": "SNYK-LINUX-EXPAT-450908",
               "properties": Object {
+                "cvssv3_baseScore": 7.5,
                 "tags": Array [
                   "security",
                   "CWE-611",

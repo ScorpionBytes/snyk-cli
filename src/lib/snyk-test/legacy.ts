@@ -104,6 +104,7 @@ interface AnnotatedIssue extends IssueData {
   isPatchable: boolean;
   severity: SEVERITY;
   originalSeverity?: SEVERITY;
+  cvssScore?: number;
 
   // These fields present for "node_module" based scans to allow remediation
   bundled?: any;
