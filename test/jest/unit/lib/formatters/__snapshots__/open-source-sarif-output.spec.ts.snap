@@ -36,6 +36,9 @@ Object {
           "message": Object {
             "text": "This file introduces a vulnerable ajv package with a critical severity vulnerability.",
           },
+          "properties": Object {
+            "cvssv3_baseScore": 7.5,
+          },
           "ruleId": "SNYK-JS-AJV-584908",
         },
       ],

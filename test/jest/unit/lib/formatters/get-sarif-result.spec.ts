@@ -52,11 +52,16 @@ describe('Retrieving sarif result', () => {
           text:
             'This file introduces a vulnerable expat package with a critical severity vulnerability.',
         },
+        properties: {
+          cvssv3_baseScore: 7.5,
+        },
         locations: [
           {
-            logicalLocations: [{
-              fullyQualifiedName: 'expat@2.2.5-r0'
-            }],
+            logicalLocations: [
+              {
+                fullyQualifiedName: 'expat@2.2.5-r0',
+              },
+            ],
             physicalLocation: {
               artifactLocation: { uri: want.resultLocationUri },
               region: { startLine: 1 },
@@ -68,7 +73,10 @@ describe('Retrieving sarif result', () => {
   });
 });
 
-function getTestResult(testResultOverride = {}, vulnOverride = {}): TestResult {
+function getTestResult(
+  testResultOverride = {},
+  vulnOverride = { cvssScore: 7.5 },
+): TestResult {
   return {
     vulnerabilities: [
       {

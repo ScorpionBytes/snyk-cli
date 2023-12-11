@@ -29,12 +29,18 @@ Object {
           "message": Object {
             "text": "This file introduces a vulnerable expat package with a critical severity vulnerability.",
           },
+          "properties": Object {
+            "cvssv3_baseScore": null,
+          },
           "ruleId": "SNYK-LINUX-EXPAT-450908",
         },
       ],
       "tool": Object {
         "driver": Object {
           "name": "Snyk Container",
+          "properties": Object {
+            "artifactsScanned": 969,
+          },
           "rules": Array [
             Object {
               "defaultConfiguration": Object {
@@ -115,12 +121,18 @@ Object {
           "message": Object {
             "text": "This file introduces a vulnerable expat package with a critical severity vulnerability.",
           },
+          "properties": Object {
+            "cvssv3_baseScore": null,
+          },
           "ruleId": "SNYK-LINUX-EXPAT-450908",
         },
       ],
       "tool": Object {
         "driver": Object {
           "name": "Snyk Container",
+          "properties": Object {
+            "artifactsScanned": 969,
+          },
           "rules": Array [
             Object {
               "defaultConfiguration": Object {
@@ -200,12 +212,18 @@ Object {
           "message": Object {
             "text": "This file introduces a vulnerable expat package with a high severity vulnerability.",
           },
+          "properties": Object {
+            "cvssv3_baseScore": null,
+          },
           "ruleId": "SNYK-LINUX-EXPAT-450908",
         },
       ],
       "tool": Object {
         "driver": Object {
           "name": "Snyk Container",
+          "properties": Object {
+            "artifactsScanned": 969,
+          },
           "rules": Array [
             Object {
               "defaultConfiguration": Object {

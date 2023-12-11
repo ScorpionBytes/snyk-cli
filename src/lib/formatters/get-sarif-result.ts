@@ -44,6 +44,9 @@ export function getResults(testResult: TestResult): sarif.Result[] {
             },
           ]
         : undefined,
+      properties: {
+        cvssv3_baseScore: vuln.hasOwnProperty("cvssScore") ? vuln.cvssScore : null,
+      }
     }),
   );
 }
