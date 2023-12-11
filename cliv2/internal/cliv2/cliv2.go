@@ -4,7 +4,9 @@ Entry point class for the CLIv2 version.
 package cliv2
 
 import (
+	"context"
 	_ "embed"
+	"errors"
 	"fmt"
 	"io"
 	"log"
@@ -13,6 +15,7 @@ import (
 	"path"
 	"regexp"
 	"strings"
+	"time"
 
 	"github.com/gofrs/flock"
 	"github.com/snyk/go-application-framework/pkg/configuration"
@@ -72,6 +75,11 @@ func NewCLIv2(config configuration.Configuration, debugLogger *log.Logger) (*CLI
 	}
 
 	return &cli, nil
+}
+
+// SetV1BinaryLocation for testing purposes
+func (c *CLI) SetV1BinaryLocation(filePath string) {
+	c.v1BinaryLocation = filePath
 }
 
 func (c *CLI) Init() (err error) {
@@ -200,7 +208,7 @@ func (c *CLI) GetBinaryLocation() string {
 }
 
 func (c *CLI) printVersion() {
-	fmt.Fprintln(c.stdout, GetFullVersion())
+	_, _ = fmt.Fprintln(c.stdout, GetFullVersion())
 }
 
 func (c *CLI) commandVersion(passthroughArgs []string) error {
@@ -235,8 +243,8 @@ func (c *CLI) commandAbout(proxyInfo *proxy.ProxyInfo, passthroughArgs []string)
 			}
 
 			fmt.Printf("Package: %s \n", strings.ReplaceAll(strings.ReplaceAll(fPath, "/licenses/", ""), "/"+f.Name(), ""))
-			fmt.Fprintln(c.stdout, string(data))
-			fmt.Fprint(c.stdout, separator)
+			_, _ = fmt.Fprintln(c.stdout, string(data))
+			_, _ = fmt.Fprint(c.stdout, separator)
 		}
 	}
 
@@ -264,7 +272,8 @@ func PrepareV1EnvironmentVariables(
 	integrationVersion string,
 	proxyAddress string,
 	caCertificateLocation string,
-	orgid string,
+	config configuration.Configuration,
+	args []string,
 ) (result []string, err error) {
 
 	inputAsMap := utils.ToKeyValueMap(input, "=")
@@ -309,7 +318,18 @@ func PrepareV1EnvironmentVariables(
 		inputAsMap[constants.SNYK_HTTPS_PROXY_ENV] = proxyAddress
 		inputAsMap[constants.SNYK_HTTP_PROXY_ENV] = proxyAddress
 		inputAsMap[constants.SNYK_CA_CERTIFICATE_LOCATION_ENV] = caCertificateLocation
-		inputAsMap[constants.SNYK_INTERNAL_ORGID_ENV] = orgid
+		inputAsMap[constants.SNYK_INTERNAL_ORGID_ENV] = config.GetString(configuration.ORGANIZATION)
+
+		if config.IsSet(configuration.API_URL) {
+			inputAsMap[constants.SNYK_ENDPOINT_ENV] = config.GetString(configuration.API_URL)
+		}
+
+		_, orgEnVarExists := inputAsMap[constants.SNYK_ORG_ENV]
+		if !utils.ContainsPrefix(args, "--org=") &&
+			!orgEnVarExists &&
+			config.IsSet(configuration.ORGANIZATION) {
+			inputAsMap[constants.SNYK_ORG_ENV] = config.GetString(configuration.ORGANIZATION)
+		}
 
 		// merge user defined (external) and internal no_proxy configuration
 		if len(inputAsMap[constants.SNYK_HTTP_NO_PROXY_ENV_SYSTEM]) > 0 {
@@ -329,6 +349,7 @@ func PrepareV1EnvironmentVariables(
 }
 
 func (c *CLI) PrepareV1Command(
+	ctx context.Context,
 	cmd string,
 	args []string,
 	proxyInfo *proxy.ProxyInfo,
@@ -336,10 +357,8 @@ func (c *CLI) PrepareV1Command(
 	integrationVersion string,
 ) (snykCmd *exec.Cmd, err error) {
 	proxyAddress := fmt.Sprintf("http://%s:%s@127.0.0.1:%d", proxy.PROXY_USERNAME, proxyInfo.Password, proxyInfo.Port)
-	orgid := c.globalConfig.GetString(configuration.ORGANIZATION)
-
-	snykCmd = exec.Command(cmd, args...)
-	snykCmd.Env, err = PrepareV1EnvironmentVariables(c.env, integrationName, integrationVersion, proxyAddress, proxyInfo.CertificateLocation, orgid)
+	snykCmd = exec.CommandContext(ctx, cmd, args...)
+	snykCmd.Env, err = PrepareV1EnvironmentVariables(c.env, integrationName, integrationVersion, proxyAddress, proxyInfo.CertificateLocation, c.globalConfig, args)
 
 	if len(c.WorkingDirectory) > 0 {
 		snykCmd.Dir = c.WorkingDirectory
@@ -349,8 +368,17 @@ func (c *CLI) PrepareV1Command(
 }
 
 func (c *CLI) executeV1Default(proxyInfo *proxy.ProxyInfo, passThroughArgs []string) error {
+	timeout := c.globalConfig.GetInt(configuration.TIMEOUT)
+	var ctx context.Context
+	var cancel context.CancelFunc
+	if timeout == 0 {
+		ctx = context.Background()
+	} else {
+		ctx, cancel = context.WithTimeout(context.Background(), time.Duration(timeout)*time.Second)
+		defer cancel()
+	}
 
-	snykCmd, err := c.PrepareV1Command(c.v1BinaryLocation, passThroughArgs, proxyInfo, c.GetIntegrationName(), GetFullVersion())
+	snykCmd, err := c.PrepareV1Command(ctx, c.v1BinaryLocation, passThroughArgs, proxyInfo, c.GetIntegrationName(), GetFullVersion())
 
 	if c.DebugLogger.Writer() != io.Discard {
 		c.DebugLogger.Println("Launching: ")
@@ -369,10 +397,14 @@ func (c *CLI) executeV1Default(proxyInfo *proxy.ProxyInfo, passThroughArgs []str
 			constants.SNYK_HTTP_PROXY_ENV_SYSTEM,
 			constants.SNYK_HTTP_NO_PROXY_ENV_SYSTEM,
 			constants.SNYK_ANALYTICS_DISABLED_ENV,
+			constants.SNYK_ENDPOINT_ENV,
+			constants.SNYK_ORG_ENV,
 		}
 
 		for _, key := range listedEnvironmentVariables {
-			c.DebugLogger.Println("  ", key, "=", variablesMap[key])
+			if value, exists := variablesMap[key]; exists {
+				c.DebugLogger.Println("  ", key, "=", value)
+			}
 		}
 
 	}
@@ -382,13 +414,16 @@ func (c *CLI) executeV1Default(proxyInfo *proxy.ProxyInfo, passThroughArgs []str
 	snykCmd.Stderr = c.stderr
 
 	if err != nil {
-		if evWarning, ok := err.(EnvironmentWarning); ok {
-			fmt.Fprintln(c.stdout, "WARNING! ", evWarning)
+		var evWarning EnvironmentWarning
+		if errors.As(err, &evWarning) {
+			_, _ = fmt.Fprintln(c.stdout, "WARNING! ", evWarning)
 		}
 	}
 
 	err = snykCmd.Run()
-
+	if errors.Is(ctx.Err(), context.DeadlineExceeded) {
+		return ctx.Err()
+	}
 	return err
 }
 
@@ -412,14 +447,17 @@ func DeriveExitCode(err error) int {
 	returnCode := constants.SNYK_EXIT_CODE_OK
 
 	if err != nil {
-		if exitError, ok := err.(*exec.ExitError); ok {
+		var exitError *exec.ExitError
+
+		if errors.As(err, &exitError) {
 			returnCode = exitError.ExitCode()
+		} else if errors.Is(err, context.DeadlineExceeded) {
+			returnCode = constants.SNYK_EXIT_CODE_EX_UNAVAILABLE
 		} else {
 			// got an error but it's not an ExitError
 			returnCode = constants.SNYK_EXIT_CODE_ERROR
 		}
 	}
-
 	return returnCode
 }
 

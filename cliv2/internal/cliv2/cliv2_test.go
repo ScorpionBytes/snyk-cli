@@ -1,11 +1,13 @@
 package cliv2_test
 
 import (
+	"context"
 	"io"
 	"log"
 	"os"
 	"os/exec"
 	"path"
+	"runtime"
 	"sort"
 	"testing"
 	"time"
@@ -32,6 +34,13 @@ func getCacheDir(t *testing.T) string {
 
 func Test_PrepareV1EnvironmentVariables_Fill_and_Filter(t *testing.T) {
 
+	orgid := "orgid"
+	testapi := "https://api.snyky.io"
+
+	config := configuration.NewInMemory()
+	config.Set(configuration.ORGANIZATION, orgid)
+	config.Set(configuration.API_URL, testapi)
+
 	input := []string{
 		"something=1",
 		"in=2",
@@ -56,11 +65,13 @@ func Test_PrepareV1EnvironmentVariables_Fill_and_Filter(t *testing.T) {
 		"SNYK_SYSTEM_NO_PROXY=noProxy",
 		"SNYK_SYSTEM_HTTP_PROXY=httpProxy",
 		"SNYK_SYSTEM_HTTPS_PROXY=httpsProxy",
-		"SNYK_INTERNAL_ORGID=orgid",
+		"SNYK_INTERNAL_ORGID=" + orgid,
+		"SNYK_CFG_ORG=" + orgid,
+		"SNYK_API=" + testapi,
 		"NO_PROXY=" + constants.SNYK_INTERNAL_NO_PROXY + ",noProxy",
 	}
 
-	actual, err := cliv2.PrepareV1EnvironmentVariables(input, "foo", "bar", "proxy", "cacertlocation", "orgid")
+	actual, err := cliv2.PrepareV1EnvironmentVariables(input, "foo", "bar", "proxy", "cacertlocation", config, []string{})
 
 	sort.Strings(expected)
 	sort.Strings(actual)
@@ -69,6 +80,13 @@ func Test_PrepareV1EnvironmentVariables_Fill_and_Filter(t *testing.T) {
 }
 
 func Test_PrepareV1EnvironmentVariables_DontOverrideExistingIntegration(t *testing.T) {
+
+	orgid := "orgid"
+	testapi := "https://api.snyky.io"
+
+	config := configuration.NewInMemory()
+	config.Set(configuration.ORGANIZATION, orgid)
+	config.Set(configuration.API_URL, testapi)
 
 	input := []string{"something=1", "in=2", "here=3", "SNYK_INTEGRATION_NAME=exists", "SNYK_INTEGRATION_VERSION=already"}
 	expected := []string{
@@ -83,11 +101,13 @@ func Test_PrepareV1EnvironmentVariables_DontOverrideExistingIntegration(t *testi
 		"SNYK_SYSTEM_NO_PROXY=",
 		"SNYK_SYSTEM_HTTP_PROXY=",
 		"SNYK_SYSTEM_HTTPS_PROXY=",
-		"SNYK_INTERNAL_ORGID=orgid",
+		"SNYK_INTERNAL_ORGID=" + orgid,
+		"SNYK_CFG_ORG=" + orgid,
+		"SNYK_API=" + testapi,
 		"NO_PROXY=" + constants.SNYK_INTERNAL_NO_PROXY,
 	}
 
-	actual, err := cliv2.PrepareV1EnvironmentVariables(input, "foo", "bar", "proxy", "cacertlocation", "orgid")
+	actual, err := cliv2.PrepareV1EnvironmentVariables(input, "foo", "bar", "proxy", "cacertlocation", config, []string{})
 
 	sort.Strings(expected)
 	sort.Strings(actual)
@@ -96,6 +116,13 @@ func Test_PrepareV1EnvironmentVariables_DontOverrideExistingIntegration(t *testi
 }
 
 func Test_PrepareV1EnvironmentVariables_OverrideProxyAndCerts(t *testing.T) {
+
+	orgid := "orgid"
+	testapi := "https://api.snyky.io"
+
+	config := configuration.NewInMemory()
+	config.Set(configuration.ORGANIZATION, orgid)
+	config.Set(configuration.API_URL, testapi)
 
 	input := []string{"something=1", "in=2", "here=3", "http_proxy=exists", "https_proxy=already", "NODE_EXTRA_CA_CERTS=again", "no_proxy=312123"}
 	expected := []string{
@@ -110,11 +137,13 @@ func Test_PrepareV1EnvironmentVariables_OverrideProxyAndCerts(t *testing.T) {
 		"SNYK_SYSTEM_NO_PROXY=312123",
 		"SNYK_SYSTEM_HTTP_PROXY=exists",
 		"SNYK_SYSTEM_HTTPS_PROXY=already",
-		"SNYK_INTERNAL_ORGID=orgid",
+		"SNYK_INTERNAL_ORGID=" + orgid,
+		"SNYK_CFG_ORG=" + orgid,
+		"SNYK_API=" + testapi,
 		"NO_PROXY=" + constants.SNYK_INTERNAL_NO_PROXY + ",312123",
 	}
 
-	actual, err := cliv2.PrepareV1EnvironmentVariables(input, "foo", "bar", "proxy", "cacertlocation", "orgid")
+	actual, err := cliv2.PrepareV1EnvironmentVariables(input, "foo", "bar", "proxy", "cacertlocation", config, []string{})
 
 	sort.Strings(expected)
 	sort.Strings(actual)
@@ -122,12 +151,59 @@ func Test_PrepareV1EnvironmentVariables_OverrideProxyAndCerts(t *testing.T) {
 	assert.Nil(t, err)
 }
 
+func Test_PrepareV1EnvironmentVariables_OnlyExplicitlySetValues(t *testing.T) {
+
+	config := configuration.NewInMemory()
+
+	t.Run("Values not set", func(t *testing.T) {
+		input := []string{}
+		notExpected := []string{"SNYK_API=", "SNYK_CFG_ORG="}
+
+		actual, err := cliv2.PrepareV1EnvironmentVariables(input, "foo", "bar", "proxy", "cacertlocation", config, []string{})
+
+		assert.NotContains(t, actual, notExpected)
+		assert.Nil(t, err)
+	})
+
+	t.Run("Values explicitly set api", func(t *testing.T) {
+		input := []string{}
+		expected := []string{"SNYK_API=https://api.snyky.io"}
+
+		config.Set(configuration.API_URL, "https://api.snyky.io")
+
+		actual, err := cliv2.PrepareV1EnvironmentVariables(input, "foo", "bar", "proxy", "cacertlocation", config, []string{})
+
+		assert.NotContains(t, actual, expected)
+		assert.Nil(t, err)
+	})
+
+	t.Run("Values explicitly set org", func(t *testing.T) {
+		input := []string{}
+		expected := []string{"SNYK_CFG_ORG=my-org"}
+
+		config.Set(configuration.ORGANIZATION, "my-org")
+
+		actual, err := cliv2.PrepareV1EnvironmentVariables(input, "foo", "bar", "proxy", "cacertlocation", config, []string{})
+
+		assert.NotContains(t, actual, expected)
+		assert.Nil(t, err)
+	})
+
+}
+
 func Test_PrepareV1EnvironmentVariables_Fail_DontOverrideExisting(t *testing.T) {
+
+	orgid := "orgid"
+	testapi := "https://api.snyky.io"
+
+	config := configuration.NewInMemory()
+	config.Set(configuration.ORGANIZATION, orgid)
+	config.Set(configuration.API_URL, testapi)
 
 	input := []string{"something=1", "in=2", "here=3", "SNYK_INTEGRATION_NAME=exists"}
 	expected := input
 
-	actual, err := cliv2.PrepareV1EnvironmentVariables(input, "foo", "bar", "unused", "unused", "orgid")
+	actual, err := cliv2.PrepareV1EnvironmentVariables(input, "foo", "bar", "unused", "unused", config, []string{})
 
 	sort.Strings(expected)
 	sort.Strings(actual)
@@ -136,6 +212,51 @@ func Test_PrepareV1EnvironmentVariables_Fail_DontOverrideExisting(t *testing.T) 
 	warn, ok := err.(cliv2.EnvironmentWarning)
 	assert.True(t, ok)
 	assert.NotNil(t, warn)
+}
+
+func Test_PrepareV1EnvironmentVariables_Fail_DontOverrideExisting_Org(t *testing.T) {
+
+	orgid := "orgid"
+	testapi := "https://api.snyky.io"
+
+	config := configuration.NewInMemory()
+	config.Set(configuration.ORGANIZATION, orgid)
+	config.Set(configuration.API_URL, testapi)
+
+	notExpected := "SNYK_CFG_ORG=" + orgid
+
+	t.Run("config value is used", func(t *testing.T) {
+		input := []string{}
+		args := []string{"-d"}
+
+		actual, err := cliv2.PrepareV1EnvironmentVariables(input, "foo", "bar", "unused", "unused", config, args)
+		assert.Nil(t, err)
+
+		assert.Contains(t, actual, notExpected)
+	})
+
+	t.Run("cmd arg is given, config value not used", func(t *testing.T) {
+		input := []string{}
+		args := []string{"-d", "--org=something"}
+
+		actual, err := cliv2.PrepareV1EnvironmentVariables(input, "foo", "bar", "unused", "unused", config, args)
+		assert.Nil(t, err)
+
+		assert.NotContains(t, actual, notExpected)
+	})
+
+	t.Run("env var is given, config value not used", func(t *testing.T) {
+		expectedOrgEnvVar := "SNYK_CFG_ORG=myorg"
+		input := []string{"something=hello", expectedOrgEnvVar}
+		args := []string{"-d"}
+
+		actual, err := cliv2.PrepareV1EnvironmentVariables(input, "foo", "bar", "unused", "unused", config, args)
+		assert.Nil(t, err)
+
+		assert.NotContains(t, actual, notExpected)
+		assert.Contains(t, actual, expectedOrgEnvVar)
+	})
+
 }
 
 func getProxyInfoForTest() *proxy.ProxyInfo {
@@ -151,9 +272,11 @@ func Test_prepareV1Command(t *testing.T) {
 	cacheDir := getCacheDir(t)
 	config := configuration.NewInMemory()
 	config.Set(configuration.CACHE_PATH, cacheDir)
-	cli, _ := cliv2.NewCLIv2(config, discardLogger)
+	cli, err := cliv2.NewCLIv2(config, discardLogger)
+	assert.NoError(t, err)
 
 	snykCmd, err := cli.PrepareV1Command(
+		context.Background(),
 		"someExecutable",
 		expectedArgs,
 		getProxyInfoForTest(),
@@ -178,11 +301,12 @@ func Test_extractOnlyOnce(t *testing.T) {
 	assert.NoDirExists(t, tmpDir)
 
 	// create instance under test
-	cli, _ := cliv2.NewCLIv2(config, discardLogger)
+	cli, err := cliv2.NewCLIv2(config, discardLogger)
+	assert.NoError(t, err)
+	assert.NoError(t, cli.Init())
 
 	// run once
-	assert.Nil(t, cli.Init())
-	cli.Execute(getProxyInfoForTest(), []string{"--help"})
+	err = cli.Execute(getProxyInfoForTest(), []string{"--help"})
 	assert.FileExists(t, cli.GetBinaryLocation())
 	fileInfo1, _ := os.Stat(cli.GetBinaryLocation())
 
@@ -191,7 +315,7 @@ func Test_extractOnlyOnce(t *testing.T) {
 
 	// run twice
 	assert.Nil(t, cli.Init())
-	cli.Execute(getProxyInfoForTest(), []string{"--help"})
+	_ = cli.Execute(getProxyInfoForTest(), []string{"--help"})
 	assert.FileExists(t, cli.GetBinaryLocation())
 	fileInfo2, _ := os.Stat(cli.GetBinaryLocation())
 
@@ -207,7 +331,8 @@ func Test_init_extractDueToInvalidBinary(t *testing.T) {
 	assert.NoDirExists(t, tmpDir)
 
 	// create instance under test
-	cli, _ := cliv2.NewCLIv2(config, discardLogger)
+	cli, err := cliv2.NewCLIv2(config, discardLogger)
+	assert.NoError(t, err)
 
 	// fill binary with invalid data
 	_ = os.MkdirAll(tmpDir, 0755)
@@ -244,8 +369,9 @@ func Test_executeRunV2only(t *testing.T) {
 	assert.NoDirExists(t, tmpDir)
 
 	// create instance under test
-	cli, _ := cliv2.NewCLIv2(config, discardLogger)
-	assert.Nil(t, cli.Init())
+	cli, err := cliv2.NewCLIv2(config, discardLogger)
+	assert.NoError(t, err)
+	assert.NoError(t, cli.Init())
 
 	actualReturnCode := cliv2.DeriveExitCode(cli.Execute(getProxyInfoForTest(), []string{"--version"}))
 	assert.Equal(t, expectedReturnCode, actualReturnCode)
@@ -261,8 +387,9 @@ func Test_executeUnknownCommand(t *testing.T) {
 	config.Set(configuration.CACHE_PATH, cacheDir)
 
 	// create instance under test
-	cli, _ := cliv2.NewCLIv2(config, discardLogger)
-	assert.Nil(t, cli.Init())
+	cli, err := cliv2.NewCLIv2(config, discardLogger)
+	assert.NoError(t, err)
+	assert.NoError(t, cli.Init())
 
 	actualReturnCode := cliv2.DeriveExitCode(cli.Execute(getProxyInfoForTest(), []string{"bogusCommand"}))
 	assert.Equal(t, expectedReturnCode, actualReturnCode)
@@ -308,8 +435,9 @@ func Test_clearCacheBigCache(t *testing.T) {
 	config.Set(configuration.CACHE_PATH, cacheDir)
 
 	// create instance under test
-	cli, _ := cliv2.NewCLIv2(config, discardLogger)
-	assert.Nil(t, cli.Init())
+	cli, err := cliv2.NewCLIv2(config, discardLogger)
+	assert.NoError(t, err)
+	assert.NoError(t, cli.Init())
 
 	// create folders and files in cache dir
 	dir1 := path.Join(cli.CacheDirectory, "dir1")
@@ -328,8 +456,8 @@ func Test_clearCacheBigCache(t *testing.T) {
 	_ = os.Mkdir(dir6, 0755)
 
 	// clear cache
-	err := cli.ClearCache()
-	assert.Nil(t, err)
+	err = cli.ClearCache()
+	assert.NoError(t, err)
 
 	// check if directories that need to be deleted don't exist
 	assert.NoDirExists(t, dir1)
@@ -340,4 +468,24 @@ func Test_clearCacheBigCache(t *testing.T) {
 	// check if directories that need to exist still exist
 	assert.DirExists(t, dir6)
 	assert.FileExists(t, currentVersion)
+}
+
+func Test_setTimeout(t *testing.T) {
+	if //goland:noinspection ALL
+	runtime.GOOS == "windows" {
+		t.Skip("Skipping test on windows")
+	}
+	config := configuration.NewInMemory()
+	cli, err := cliv2.NewCLIv2(config, discardLogger)
+	assert.NoError(t, err)
+	config.Set(configuration.TIMEOUT, 1)
+
+	// sleep for 2s
+	cli.SetV1BinaryLocation("/bin/sleep")
+	err = cli.Execute(getProxyInfoForTest(), []string{"2"})
+
+	assert.ErrorIs(t, err, context.DeadlineExceeded)
+
+	// ensure that -1 is correctly mapped if timeout is set
+	assert.Equal(t, constants.SNYK_EXIT_CODE_EX_UNAVAILABLE, cliv2.DeriveExitCode(err))
 }

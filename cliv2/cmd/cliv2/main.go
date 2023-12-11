@@ -4,7 +4,9 @@ package main
 import _ "github.com/snyk/go-application-framework/pkg/networking/fips_enable"
 
 import (
+	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"io"
 	"os"
@@ -13,9 +15,15 @@ import (
 	"time"
 
 	"github.com/rs/zerolog"
+	"github.com/spf13/cobra"
+	"github.com/spf13/pflag"
+
 	"github.com/snyk/cli-extension-dep-graph/pkg/depgraph"
 	"github.com/snyk/cli-extension-iac-rules/iacrules"
 	"github.com/snyk/cli-extension-sbom/pkg/sbom"
+	"github.com/snyk/cli/cliv2/internal/cliv2"
+	"github.com/snyk/cli/cliv2/internal/constants"
+	"github.com/snyk/cli/cliv2/pkg/basic_workflows"
 	"github.com/snyk/container-cli/pkg/container"
 	"github.com/snyk/go-application-framework/pkg/analytics"
 	"github.com/snyk/go-application-framework/pkg/app"
@@ -23,17 +31,12 @@ import (
 	"github.com/snyk/go-application-framework/pkg/configuration"
 	localworkflows "github.com/snyk/go-application-framework/pkg/local_workflows"
 	"github.com/snyk/go-application-framework/pkg/networking"
+	"github.com/snyk/go-application-framework/pkg/runtimeinfo"
 	"github.com/snyk/go-application-framework/pkg/utils"
 	"github.com/snyk/go-application-framework/pkg/workflow"
 	"github.com/snyk/go-httpauth/pkg/httpauth"
 	"github.com/snyk/snyk-iac-capture/pkg/capture"
 	snykls "github.com/snyk/snyk-ls/ls_extension"
-	"github.com/spf13/cobra"
-	"github.com/spf13/pflag"
-
-	"github.com/snyk/cli/cliv2/internal/cliv2"
-	"github.com/snyk/cli/cliv2/internal/constants"
-	"github.com/snyk/cli/cliv2/pkg/basic_workflows"
 )
 
 var internalOS string
@@ -79,7 +82,7 @@ const (
 
 func getDebugLevel(config configuration.Configuration) zerolog.Level {
 	loglevel := zerolog.DebugLevel
-	if loglevelString := config.GetString("snyk_loglevel"); loglevelString != "" {
+	if loglevelString := config.GetString("snyk_log_level"); loglevelString != "" {
 		var err error
 		loglevel, err = zerolog.ParseLevel(loglevelString)
 		if err == nil {
@@ -115,6 +118,7 @@ func initApplicationConfiguration(config configuration.Configuration) {
 	config.AddAlternativeKeys(configuration.API_URL, []string{"endpoint"})
 	config.AddAlternativeKeys(configuration.ADD_TRUSTED_CA_FILE, []string{"NODE_EXTRA_CA_CERTS"})
 	config.AddAlternativeKeys(configuration.ANALYTICS_DISABLED, []string{strings.ToLower(constants.SNYK_ANALYTICS_DISABLED_ENV), "snyk_cfg_disable_analytics", "disable-analytics", "disable_analytics"})
+	config.AddAlternativeKeys(configuration.ORGANIZATION, []string{"snyk_cfg_org"})
 
 	// if the CONFIG_KEY_OAUTH_TOKEN is specified as env var, we don't apply any additional logic
 	_, ok := os.LookupEnv(auth.CONFIG_KEY_OAUTH_TOKEN)
@@ -352,7 +356,8 @@ func handleError(err error) HandleError {
 
 func displayError(err error) {
 	if err != nil {
-		if _, ok := err.(*exec.ExitError); !ok {
+		var exitError *exec.ExitError
+		if !errors.As(err, &exitError) {
 			if globalConfiguration.GetBool(localworkflows.OUTPUT_CONFIG_KEY_JSON) {
 				jsonError := JsonErrorStruct{
 					Ok:       false,
@@ -363,7 +368,11 @@ func displayError(err error) {
 				jsonErrorBuffer, _ := json.MarshalIndent(jsonError, "", "  ")
 				fmt.Println(string(jsonErrorBuffer))
 			} else {
-				fmt.Println(err)
+				if errors.Is(err, context.DeadlineExceeded) {
+					fmt.Println("command timed out")
+				} else {
+					fmt.Println(err)
+				}
 			}
 		}
 	}
@@ -371,6 +380,7 @@ func displayError(err error) {
 
 func MainWithErrorCode() int {
 	var err error
+	rInfo := runtimeinfo.New(runtimeinfo.WithName("snyk-cli"), runtimeinfo.WithVersion(cliv2.GetFullVersion()))
 
 	rootCommand := prepareRootCommand()
 	_ = rootCommand.ParseFlags(os.Args)
@@ -386,7 +396,7 @@ func MainWithErrorCode() int {
 	debugLogger := initDebugLogger(globalConfiguration)
 
 	initApplicationConfiguration(globalConfiguration)
-	engine = app.CreateAppEngineWithOptions(app.WithZeroLogger(debugLogger), app.WithConfiguration(globalConfiguration))
+	engine = app.CreateAppEngineWithOptions(app.WithZeroLogger(debugLogger), app.WithConfiguration(globalConfiguration), app.WithRuntimeInfo(rInfo))
 
 	if noProxyAuth := globalConfiguration.GetBool(basic_workflows.PROXY_NOAUTH); noProxyAuth {
 		globalConfiguration.Set(configuration.PROXY_AUTHENTICATION_MECHANISM, httpauth.StringFromAuthenticationMechanism(httpauth.NoAuth))
@@ -423,7 +433,7 @@ func MainWithErrorCode() int {
 		"User-Agent",
 		networking.UserAgent(
 			networking.UaWithConfig(globalConfiguration),
-			networking.UaWithApplication("snyk-cli", cliv2.GetFullVersion()),
+			networking.UaWithRuntimeInfo(rInfo),
 			networking.UaWithOS(internalOS)).String(),
 	)
 
@@ -439,6 +449,10 @@ func MainWithErrorCode() int {
 	if globalConfiguration.GetBool(configuration.ANALYTICS_DISABLED) == false {
 		defer sendAnalytics(cliAnalytics, debugLogger)
 	}
+
+	setTimeout(globalConfiguration, func() {
+		os.Exit(constants.SNYK_EXIT_CODE_EX_UNAVAILABLE)
+	})
 
 	// run the extensible cli
 	err = rootCommand.Execute()
@@ -462,4 +476,18 @@ func MainWithErrorCode() int {
 	debugLogger.Printf("Exiting with %d", exitCode)
 
 	return exitCode
+}
+
+func setTimeout(config configuration.Configuration, onTimeout func()) {
+	timeout := config.GetInt(configuration.TIMEOUT)
+	if timeout == 0 {
+		return
+	}
+	debugLogger.Printf("Command timeout set for %d seconds", timeout)
+	go func() {
+		const gracePeriodForSubProcesses = 3
+		<-time.After(time.Duration(timeout+gracePeriodForSubProcesses) * time.Second)
+		fmt.Fprintf(os.Stdout, "command timed out")
+		onTimeout()
+	}()
 }
