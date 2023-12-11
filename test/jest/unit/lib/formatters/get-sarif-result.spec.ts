@@ -46,7 +46,12 @@ describe('Retrieving sarif result', () => {
     expect(result).toEqual([
       {
         ruleId: 'SNYK-LINUX-EXPAT-450908',
-        fixes: undefined,
+        fixes: [{
+          artifactChanges: [],
+          description: {
+            text: "Upgrade expat to version 2.2.7-r0",
+          }
+        }],
         level: 'error',
         message: {
           text:
@@ -101,7 +106,7 @@ function getTestResult(
           'expat@2.2.5-r0',
         ],
         upgradePath: [],
-        isUpgradable: false,
+        isUpgradable: true,
         isPatchable: false,
         parentDepType: 'prod',
         identifiers: {
