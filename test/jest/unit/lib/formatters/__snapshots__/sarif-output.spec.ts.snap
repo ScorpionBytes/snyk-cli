@@ -7,9 +7,15 @@ Object {
     Object {
       "results": Array [
         Object {
+          "fixes": undefined,
           "level": "error",
           "locations": Array [
             Object {
+              "logicalLocations": Array [
+                Object {
+                  "fullyQualifiedName": "expat@2.2.5-r0",
+                },
+              ],
               "physicalLocation": Object {
                 "artifactLocation": Object {
                   "uri": "Dockerfile",
@@ -87,9 +93,15 @@ Object {
     Object {
       "results": Array [
         Object {
+          "fixes": undefined,
           "level": "error",
           "locations": Array [
             Object {
+              "logicalLocations": Array [
+                Object {
+                  "fullyQualifiedName": "expat@2.2.5-r0",
+                },
+              ],
               "physicalLocation": Object {
                 "artifactLocation": Object {
                   "uri": "Dockerfile",
@@ -166,9 +178,15 @@ Object {
     Object {
       "results": Array [
         Object {
+          "fixes": undefined,
           "level": "error",
           "locations": Array [
             Object {
+              "logicalLocations": Array [
+                Object {
+                  "fullyQualifiedName": "expat@2.2.5-r0",
+                },
+              ],
               "physicalLocation": Object {
                 "artifactLocation": Object {
                   "uri": "Dockerfile",
