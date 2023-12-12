@@ -11,7 +11,7 @@ Object {
             Object {
               "artifactChanges": Array [],
               "description": Object {
-                "text": "Upgrade ajv to version 6.12.3",
+                "text": "Upgrade to jimp@0.2.28",
               },
             },
           ],

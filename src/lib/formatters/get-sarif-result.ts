@@ -34,11 +34,11 @@ export function getResults(testResult: TestResult): sarif.Result[] {
           ]
         },
       ],
-      fixes: vuln.isUpgradable
+      fixes: vuln.upgradePath.length >= 2
         ? [
             {
               description: {
-                text: `Upgrade ${vuln.packageName} to version ${vuln.fixedIn}`,
+                text: `Upgrade to ${vuln.upgradePath[1]}`,
               },
               artifactChanges: [],
             },
