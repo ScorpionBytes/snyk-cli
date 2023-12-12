@@ -8,7 +8,7 @@ export function getResults(testResult: TestResult): sarif.Result[] {
   const groupedVulnerabilities = groupBy(testResult.vulnerabilities, 'id');
   return map(
     groupedVulnerabilities,
-    ([vuln]): sarif.Result => ({
+    ([vuln]: AnnotatedIssue[]): sarif.Result => ({
       ruleId: vuln.id,
       level: getLevel(vuln),
       message: {
@@ -45,7 +45,7 @@ export function getResults(testResult: TestResult): sarif.Result[] {
           ]
         : undefined,
       properties: {
-        cvssv3_baseScore: vuln.hasOwnProperty("cvssScore") ? vuln.cvssScore : null,
+        cvssv3_baseScore: vuln.cvssScore,
       }
     }),
   );

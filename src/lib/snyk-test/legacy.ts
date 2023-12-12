@@ -105,6 +105,7 @@ interface AnnotatedIssue extends IssueData {
   severity: SEVERITY;
   originalSeverity?: SEVERITY;
   cvssScore?: number;
+  lineNumber?: number;
 
   // These fields present for "node_module" based scans to allow remediation
   bundled?: any;

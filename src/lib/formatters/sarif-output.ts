@@ -1,6 +1,6 @@
 import * as sarif from 'sarif';
 import * as upperFirst from 'lodash.upperfirst';
-import { TestResult } from '../snyk-test/legacy';
+import { AnnotatedIssue, TestResult } from '../snyk-test/legacy';
 import { SEVERITY } from '../snyk-test/legacy';
 import { getResults } from './get-sarif-result';
 
@@ -49,7 +49,7 @@ export function getTool(testResult): sarif.Tool {
 
   const pushedIds = {};
   tool.driver.rules = testResult.vulnerabilities
-    .map((vuln) => {
+    .map((vuln: AnnotatedIssue) => {
       if (pushedIds[vuln.id]) {
         return;
       }
@@ -82,7 +82,7 @@ export function getTool(testResult): sarif.Tool {
             // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
             testResult.packageManager!,
           ],
-          cvssv3_baseScore: vuln.hasOwnProperty("cvssScore") ? vuln.cvssScore : null,
+          cvssv3_baseScore: vuln.cvssScore,
         },
       };
     })
