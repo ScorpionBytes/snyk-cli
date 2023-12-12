@@ -52,6 +52,6 @@ describe('snyk test --sarif', () => {
     expect(stdout).toContain('"artifactsScanned": 1');
     expect(stdout).toContain('"cvssv3_baseScore": 5.3');
     expect(stdout).toContain('"fullyQualifiedName": "lodash@4.17.15"');
-    expect(stdout).toContain('Upgrade lodash to version 4.17.21');
+    expect(stdout).toContain('Upgrade to lodash@4.17.17');
   });
 });
