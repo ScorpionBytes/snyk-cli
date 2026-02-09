@@ -160,7 +160,9 @@ func legacycliWorkflow(
 		outWriter.Flush()
 
 		contentType := "text/plain"
-		if pkg_utils.Contains(args, "--json") || pkg_utils.Contains(args, "--sarif") {
+		if pkg_utils.Contains(args, "--json") {
+			contentType = "application/json; schema=legacy-cli"
+		} else if pkg_utils.Contains(args, "--sarif") {
 			contentType = "application/json"
 		}
 
