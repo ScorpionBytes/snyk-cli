@@ -3,7 +3,9 @@ import {
   fakeServer,
   getFirstIPv4Address,
 } from '../../../acceptance/fake-server';
-import { resolve } from 'path';
+import { resolve, join } from 'path';
+import { readFileSync, rmSync, mkdtempSync } from 'fs';
+import { tmpdir } from 'os';
 import { getAvailableServerPort } from '../../util/getServerPort';
 
 jest.setTimeout(1000 * 60);
@@ -13,6 +15,7 @@ describe('snyk redteam (mocked servers only)', () => {
   let env: Record<string, string>;
   let redteamTarget: string;
   let redteamTargetWithAgent: string;
+  let tmpDir: string | undefined;
   const projectRoot = resolve(__dirname, '../../../..');
 
   beforeAll(async () => {
@@ -39,6 +42,10 @@ describe('snyk redteam (mocked servers only)', () => {
   afterEach(() => {
     jest.resetAllMocks();
     server.restore();
+    if (tmpDir) {
+      rmSync(tmpDir, { recursive: true, force: true });
+      tmpDir = undefined;
+    }
   });
 
   afterAll((done) => {
@@ -249,6 +256,66 @@ describe('snyk redteam (mocked servers only)', () => {
         },
       ]),
     });
+  });
+
+  test('`redteam --html` outputs HTML report to stdout', async () => {
+    const { code, stdout } = await runSnykCLI(
+      `redteam --config=${redteamTarget} --experimental --html`,
+      {
+        env,
+      },
+    );
+    expect(code).toEqual(0);
+    expect(stdout).toContain('<!doctype html>');
+    expect(stdout).toContain('System Prompt Exfiltration');
+  });
+
+  test('`redteam --html-file-output` writes HTML report to file', async () => {
+    tmpDir = mkdtempSync(join(tmpdir(), 'snyk-redteam-'));
+    const htmlFile = join(tmpDir, 'report.html');
+    const { code, stdout } = await runSnykCLI(
+      `redteam --config=${redteamTarget} --experimental --html-file-output=${htmlFile}`,
+      {
+        env,
+      },
+    );
+    expect(code).toEqual(0);
+
+    expect(() => JSON.parse(stdout)).not.toThrow();
+
+    const html = readFileSync(htmlFile, 'utf-8');
+    expect(html).toContain('<!doctype html>');
+    expect(html).toContain('System Prompt Exfiltration');
+  });
+
+  test('`redteam get --html` outputs HTML report to stdout', async () => {
+    const { code, stdout } = await runSnykCLI(
+      `redteam get --experimental --id=59622253-75f3-4439-ac1e-ce94834c5804 --html`,
+      {
+        env,
+      },
+    );
+    expect(code).toEqual(0);
+    expect(stdout).toContain('<!doctype html>');
+    expect(stdout).toContain('System Prompt Exfiltration');
+  });
+
+  test('`redteam get --html-file-output` writes HTML report to file', async () => {
+    tmpDir = mkdtempSync(join(tmpdir(), 'snyk-redteam-'));
+    const htmlFile = join(tmpDir, 'report.html');
+    const { code, stdout } = await runSnykCLI(
+      `redteam get --experimental --id=59622253-75f3-4439-ac1e-ce94834c5804 --html-file-output=${htmlFile}`,
+      {
+        env,
+      },
+    );
+    expect(code).toEqual(0);
+
+    expect(() => JSON.parse(stdout)).not.toThrow();
+
+    const html = readFileSync(htmlFile, 'utf-8');
+    expect(html).toContain('<!doctype html>');
+    expect(html).toContain('System Prompt Exfiltration');
   });
 
   test('`redteam get` fails without --id flag', async () => {
