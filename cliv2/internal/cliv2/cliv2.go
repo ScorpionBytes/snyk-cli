@@ -420,7 +420,7 @@ func (c *CLI) PrepareV1Command(
 
 	if c.executablePath != "" {
 		snykCmd.Env = append(snykCmd.Env,
-			fmt.Sprintf("%s=%s", constants.SNYK_CLI_EXECUTABLE_PATH_ENV, c.executablePath))
+			fmt.Sprintf("%s=%s", constants.SNYK_INTERNAL_CLI_EXECUTABLE_PATH_ENV, c.executablePath))
 	}
 
 	if len(c.WorkingDirectory) > 0 {
@@ -465,7 +465,7 @@ func (c *CLI) executeV1Default(proxyInfo *proxy.ProxyInfo, passThroughArgs []str
 			constants.SNYK_ANALYTICS_DISABLED_ENV,
 			constants.SNYK_ENDPOINT_ENV,
 			constants.SNYK_ORG_ENV,
-			constants.SNYK_CLI_EXECUTABLE_PATH_ENV,
+			constants.SNYK_INTERNAL_CLI_EXECUTABLE_PATH_ENV,
 		}
 
 		for _, key := range listedEnvironmentVariables {
