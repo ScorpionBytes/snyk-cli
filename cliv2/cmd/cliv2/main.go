@@ -513,6 +513,7 @@ func initExtensions(engine workflow.Engine, config configuration.Configuration) 
 
 	if config.GetBool(configuration.PREVIEW_FEATURES_ENABLED) {
 		engine.AddExtensionInitializer(secrets.Init)
+		config.Set("INTERNAL_USE_UFM_PRESENTER", true)
 	}
 }
 
