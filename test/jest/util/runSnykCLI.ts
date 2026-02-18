@@ -1,5 +1,4 @@
 import { CLI_BIN_PATH } from './constants';
-import { withFipsEnvIfNeeded } from './fipsTestHelper';
 import { runCommand, RunCommandOptions, RunCommandResult } from './runCommand';
 
 const runSnykCLI = async (
@@ -16,8 +15,6 @@ const runSnykCLIWithArray = async (
   args: string[],
   options?: RunCommandOptions,
 ): Promise<RunCommandResult> => {
-  options = { ...options, env: withFipsEnvIfNeeded(options?.env) };
-
   if (process.env.TEST_SNYK_COMMAND) {
     return await runCommand(process.env.TEST_SNYK_COMMAND, args, options);
   }
