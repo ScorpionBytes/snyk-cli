@@ -2,12 +2,11 @@ package interceptor
 
 import (
 	"errors"
-	"net/http"
-	"testing"
-
 	"github.com/golang/mock/gomock"
 	"github.com/rs/zerolog"
 	"github.com/snyk/go-application-framework/pkg/mocks"
+	"net/http"
+	"testing"
 
 	"github.com/elazarl/goproxy"
 	"github.com/stretchr/testify/assert"
@@ -44,11 +43,6 @@ func TestNetworkInjector_ErrorHandling(t *testing.T) {
 	proxyCtx := &goproxy.ProxyCtx{}
 
 	_, resp := handler(req, proxyCtx)
-	defer func() {
-		if resp != nil && resp.Body != nil {
-			_ = resp.Body.Close()
-		}
-	}()
 
 	// We rely on goproxy's error context when RoundTrips fail in the interceptor.
 	assert.Equal(t, expectedErr, proxyCtx.Error, "proxyCtx.Error should be populated with the RoundTrip error")

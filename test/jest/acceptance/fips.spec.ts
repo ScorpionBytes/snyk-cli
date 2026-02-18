@@ -1,6 +1,5 @@
 import { runSnykCLI } from '../util/runSnykCLI';
 import * as fips from '../util/fipsTestHelper';
-import { isWindowsOperatingSystem } from '../../utils';
 
 jest.setTimeout(1000 * 10);
 
@@ -24,8 +23,8 @@ describe('FIPS', () => {
       expect(result.code).toBe(2);
     });
 
-    if (!isWindowsOperatingSystem()) {
-      it('does not panic when FIPS is enabled in the environment', async () => {
+    if (Object.keys(fipsEnabled).length != 0) {
+      it('do not panic when FIPS is enabled in the environment', async () => {
         const result = await runSnykCLI('whoami --experimental -d', {
           env: fipsEnabled,
         });

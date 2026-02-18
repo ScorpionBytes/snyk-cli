@@ -11,9 +11,7 @@ func WriteToFile(filePath string, data string) error {
 		return err
 	}
 
-	defer func() {
-		_ = file.Close()
-	}()
+	defer file.Close()
 
 	w := bufio.NewWriter(file)
 	_, err = w.WriteString(data)
