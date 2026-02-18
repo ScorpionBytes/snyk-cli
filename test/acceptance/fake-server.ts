@@ -18,6 +18,7 @@ const featureFlagDefaults = (): Map<string, boolean> => {
     ['sbomMonitorBeta', false],
     ['useImprovedDotnetWithoutPublish', false],
     ['scanUsrLibJars', false],
+    ['disableContainerMonitorProjectNameFix', false],
     ['show-maven-build-scope', false],
     ['show-npm-scope', false],
     ['includeGoStandardLibraryDeps', false],
