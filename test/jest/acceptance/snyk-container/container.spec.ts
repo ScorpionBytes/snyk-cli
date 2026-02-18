@@ -18,8 +18,8 @@ describe('snyk container', () => {
     });
   }
 
-  const TEST_DISTROLESS_STATIC_IMAGE =
-    'gcr.io/distroless/static@sha256:7198a357ff3a8ef750b041324873960cf2153c11cc50abb9d8d5f8bb089f6b4e';
+  const TEST_DISTROLESS_STATIC_IMAGE_NAME = 'gcr.io/distroless/static';
+  const TEST_DISTROLESS_STATIC_IMAGE = `${TEST_DISTROLESS_STATIC_IMAGE_NAME}@sha256:7198a357ff3a8ef750b041324873960cf2153c11cc50abb9d8d5f8bb089f6b4e`;
   const TEST_OS_PACKAGES_AND_APP_VULNS_TAR =
     'test/fixtures/container-projects/os-packages-and-app-vulns.tar';
   const TEST_MULTI_PROJECT_IMAGE_TAR =
@@ -899,6 +899,7 @@ DepGraph end`,
         expect.objectContaining({
           ok: true,
           packageManager: 'deb',
+          projectName: `docker-image|${TEST_DISTROLESS_STATIC_IMAGE_NAME}`,
           manageUrl: expect.stringContaining('://'),
           scanResult: expect.objectContaining({
             facts: expect.arrayContaining([
@@ -933,6 +934,7 @@ DepGraph end`,
           expect.objectContaining({
             ok: true,
             packageManager: 'deb',
+            projectName: 'docker-image|snyk/snyk',
             manageUrl: expect.stringContaining('://'),
             scanResult: expect.objectContaining({
               facts: expect.arrayContaining([
@@ -955,6 +957,7 @@ DepGraph end`,
           expect.objectContaining({
             ok: true,
             packageManager: 'gomodules',
+            projectName: 'docker-image|snyk/snyk:/usr/local/bin/snyk',
             manageUrl: expect.stringContaining('://'),
             scanResult: expect.objectContaining({
               facts: expect.arrayContaining([
@@ -971,6 +974,18 @@ DepGraph end`,
           }),
         ]),
       );
+    });
+
+    it('snyk container monitor json returns custom projectName when --project-name is provided', async () => {
+      const customProjectName = 'my-custom-project-name';
+      const { code, stdout } = await runSnykCLI(
+        `container monitor --platform=linux/amd64 --project-name=${customProjectName} --json ${TEST_DISTROLESS_STATIC_IMAGE}`,
+      );
+      expect(code).toEqual(0);
+      const result = JSON.parse(stdout);
+
+      // projectName should match the --project-name flag value
+      expect(result.projectName).toBe(customProjectName);
     });
   });
 
