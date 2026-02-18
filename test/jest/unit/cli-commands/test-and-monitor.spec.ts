@@ -48,6 +48,7 @@ describe('monitor & test', () => {
   let getEcosystemSpy: jest.SpyInstance;
   let analyticsSpy: jest.SpyInstance;
   let snykMonitorSpy: jest.SpyInstance;
+  let detectSpy: jest.SpyInstance;
 
   beforeEach(() => {
     getEcosystemSpy = jest.spyOn(ecosystems, 'getEcosystem');
@@ -66,6 +67,7 @@ describe('monitor & test', () => {
     getEcosystemSpy.mockRestore();
     analyticsSpy.mockRestore();
     snykMonitorSpy.mockRestore();
+    detectSpy?.mockRestore();
     (featureFlags.hasFeatureFlag as jest.Mock).mockResolvedValue(false);
   });
 
@@ -77,6 +79,9 @@ describe('monitor & test', () => {
         'dotnet-runtime-resolution': true,
       };
       (featureFlags.hasFeatureFlag as jest.Mock).mockResolvedValue(true);
+      (
+        featureFlags.isFeatureFlagSupportedForOrg as jest.Mock
+      ).mockResolvedValue({ ok: true });
 
       try {
         await monitor('path/to/project', options);
@@ -137,7 +142,9 @@ describe('monitor & test', () => {
   describe('test', () => {
     beforeEach(() => {
       (runTest as jest.Mock).mockResolvedValue([]);
-      jest.spyOn(detect, 'detectPackageManager').mockReturnValue('nuget');
+      detectSpy = jest
+        .spyOn(detect, 'detectPackageManager')
+        .mockReturnValue('nuget');
     });
 
     it('should set useImprovedDotnetWithoutPublish on options when the feature flag is enabled', async () => {
@@ -145,6 +152,9 @@ describe('monitor & test', () => {
         'dotnet-runtime-resolution': true,
       };
       (featureFlags.hasFeatureFlag as jest.Mock).mockResolvedValue(true);
+      (
+        featureFlags.isFeatureFlagSupportedForOrg as jest.Mock
+      ).mockResolvedValue({ ok: true });
       await snykTest('path/to/project', options);
 
       expect(featureFlags.hasFeatureFlag).toHaveBeenCalledWith(
@@ -152,6 +162,16 @@ describe('monitor & test', () => {
         options,
       );
       expect(options.useImprovedDotnetWithoutPublish).toBe(true);
+
+      expect(detectSpy).toHaveBeenCalled();
+      const [, , featureFlagsArg] = detectSpy.mock.calls[0];
+      expect([...featureFlagsArg]).toEqual(
+        expect.arrayContaining([
+          'enablePnpmCli',
+          'show-maven-build-scope',
+          'show-npm-scope',
+        ]),
+      );
     });
 
     it('should not set useImprovedDotnetWithoutPublish on options when the feature flag is disabled', async () => {

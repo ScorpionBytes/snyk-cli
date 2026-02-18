@@ -1,6 +1,6 @@
 module github.com/snyk/cli/cliv2
 
-go 1.24.4
+go 1.25.7
 
 require (
 	github.com/elazarl/goproxy v1.7.2
@@ -10,20 +10,21 @@ require (
 	github.com/google/uuid v1.6.0
 	github.com/pkg/errors v0.9.1
 	github.com/rs/zerolog v1.34.0
-	github.com/snyk/cli-extension-ai-bom v0.0.0-20260127153523-c10ebb791f73
-	github.com/snyk/cli-extension-dep-graph v0.15.1
-	github.com/snyk/cli-extension-iac v0.0.0-20260115084339-e0c36e4dffdf
-	github.com/snyk/cli-extension-iac-rules v0.0.0-20260115114457-a8ac3358ec57
+	github.com/snyk/cli-extension-ai-bom v0.0.0-20260210154950-54a225946e44
+	github.com/snyk/cli-extension-dep-graph v0.17.1
+	github.com/snyk/cli-extension-iac v0.0.0-20260206082514-00c443ccee80
+	github.com/snyk/cli-extension-iac-rules v0.0.0-20260206080712-9cbb5f95465d
 	github.com/snyk/cli-extension-mcp-scan v0.0.0-20260205184045-13a21a9b38c4
-	github.com/snyk/cli-extension-os-flows v0.0.0-20260202092920-2b2a978a1e44
-	github.com/snyk/cli-extension-sbom v0.0.0-20260123101300-130043bcdc06
+	github.com/snyk/cli-extension-os-flows v0.0.0-20260217135510-c516a8ddef18
+	github.com/snyk/cli-extension-sbom v0.0.0-20260210104429-41aece880532
 	github.com/snyk/cli-extension-secrets v0.0.0-20260203145315-1a9eb913d2f0
+	github.com/snyk/code-client-go v1.26.1
 	github.com/snyk/container-cli v0.0.0-20250321132345-1e2e01681dd7
 	github.com/snyk/error-catalog-golang-public v0.0.0-20260205094614-116c03822905
-	github.com/snyk/go-application-framework v0.0.0-20260205122411-697daedbf089
+	github.com/snyk/go-application-framework v0.0.0-20260217135626-bc6fb94119d0
 	github.com/snyk/go-httpauth v0.0.0-20240307114523-1f5ea3f55c65
 	github.com/snyk/snyk-iac-capture v0.6.5
-	github.com/snyk/snyk-ls v0.0.0-20260128094006-1a31e5aa396e
+	github.com/snyk/snyk-ls v0.0.0-20260212131823-6c7aceaf5880
 	github.com/snyk/studio-mcp v1.5.1
 	github.com/spf13/cobra v1.9.1
 	github.com/spf13/pflag v1.0.10
@@ -211,9 +212,8 @@ require (
 	github.com/shirou/gopsutil v3.21.11+incompatible // indirect
 	github.com/sirupsen/logrus v1.9.3 // indirect
 	github.com/skeema/knownhosts v1.3.2 // indirect
-	github.com/snyk/code-client-go v1.25.0 // indirect
 	github.com/snyk/dep-graph/go v0.0.0-20251219134535-fcb262dc6d25 // indirect
-	github.com/snyk/policy-engine v1.1.2 // indirect
+	github.com/snyk/policy-engine v1.1.3 // indirect
 	github.com/sourcegraph/conc v0.3.0 // indirect
 	github.com/sourcegraph/go-lsp v0.0.0-20240223163137-f80c5dd31dfd // indirect
 	github.com/spf13/afero v1.14.0 // indirect
@@ -242,11 +242,11 @@ require (
 	go.opentelemetry.io/contrib/detectors/gcp v1.38.0 // indirect
 	go.opentelemetry.io/contrib/instrumentation/google.golang.org/grpc/otelgrpc v0.63.0 // indirect
 	go.opentelemetry.io/contrib/instrumentation/net/http/otelhttp v0.61.0 // indirect
-	go.opentelemetry.io/otel v1.38.0 // indirect
-	go.opentelemetry.io/otel/metric v1.38.0 // indirect
-	go.opentelemetry.io/otel/sdk v1.38.0 // indirect
-	go.opentelemetry.io/otel/sdk/metric v1.38.0 // indirect
-	go.opentelemetry.io/otel/trace v1.38.0 // indirect
+	go.opentelemetry.io/otel v1.40.0 // indirect
+	go.opentelemetry.io/otel/metric v1.40.0 // indirect
+	go.opentelemetry.io/otel/sdk v1.40.0 // indirect
+	go.opentelemetry.io/otel/sdk/metric v1.40.0 // indirect
+	go.opentelemetry.io/otel/trace v1.40.0 // indirect
 	go.uber.org/multierr v1.11.0 // indirect
 	golang.org/x/crypto v0.47.0 // indirect
 	golang.org/x/exp v0.0.0-20251023183803-a4bb9ffd2546 // indirect
@@ -286,5 +286,7 @@ replace github.com/mattn/go-localereader v0.0.1 => github.com/mattn/go-localerea
 // replace github.com/snyk/studio-mcp => ../../studio-mcp
 
 // replace github.com/snyk/cli-extension-mcp-scan => ../../cli-extension-mcp-scan
+
+// replace github.com/snyk/cli-extension-sbom => ../../cli-extension-sbom
 
 // replace github.com/snyk/cli-extension-secrets => ../../cli-extension-secrets
