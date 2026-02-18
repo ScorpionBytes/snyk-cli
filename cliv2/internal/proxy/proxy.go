@@ -81,9 +81,7 @@ func InitCA(config configuration.Configuration, cliVersion string, logger *zerol
 		logger.Println("failed to create temp cert file")
 		return nil, err
 	}
-	defer func() {
-		_ = certFile.Close()
-	}()
+	defer certFile.Close()
 
 	certificateLocation := certFile.Name() // gives full path, not just the name
 

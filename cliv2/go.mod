@@ -1,6 +1,6 @@
 module github.com/snyk/cli/cliv2
 
-go 1.25.7
+go 1.24.4
 
 require (
 	github.com/elazarl/goproxy v1.7.2
@@ -10,7 +10,7 @@ require (
 	github.com/google/uuid v1.6.0
 	github.com/pkg/errors v0.9.1
 	github.com/rs/zerolog v1.34.0
-	github.com/snyk/cli-extension-ai-bom v0.0.0-20260210154950-54a225946e44
+	github.com/snyk/cli-extension-ai-bom v0.0.0-20260218133142-7025507e9b78
 	github.com/snyk/cli-extension-dep-graph v0.17.1
 	github.com/snyk/cli-extension-iac v0.0.0-20260206082514-00c443ccee80
 	github.com/snyk/cli-extension-iac-rules v0.0.0-20260206080712-9cbb5f95465d
@@ -19,13 +19,13 @@ require (
 	github.com/snyk/cli-extension-sbom v0.0.0-20260210104429-41aece880532
 	github.com/snyk/cli-extension-secrets v0.0.0-20260203145315-1a9eb913d2f0
 	github.com/snyk/code-client-go v1.26.1
-	github.com/snyk/container-cli v0.0.0-20250321132345-1e2e01681dd7
+	github.com/snyk/container-cli v0.0.0-20260213211631-cd2b2cf8f3ea
 	github.com/snyk/error-catalog-golang-public v0.0.0-20260205094614-116c03822905
 	github.com/snyk/go-application-framework v0.0.0-20260217135626-bc6fb94119d0
 	github.com/snyk/go-httpauth v0.0.0-20240307114523-1f5ea3f55c65
 	github.com/snyk/snyk-iac-capture v0.6.5
-	github.com/snyk/snyk-ls v0.0.0-20260212131823-6c7aceaf5880
-	github.com/snyk/studio-mcp v1.5.1
+	github.com/snyk/snyk-ls v0.0.0-20260218140157-b4fa3183668b
+	github.com/snyk/studio-mcp v1.6.0
 	github.com/spf13/cobra v1.9.1
 	github.com/spf13/pflag v1.0.10
 	github.com/stretchr/testify v1.11.1
