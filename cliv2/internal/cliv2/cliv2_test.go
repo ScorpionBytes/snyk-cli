@@ -387,7 +387,7 @@ func Test_prepareV1Command_InjectsExecutablePath(t *testing.T) {
 	execPath, err = filepath.EvalSymlinks(execPath)
 	require.NoError(t, err)
 
-	assert.Contains(t, snykCmd.Env, fmt.Sprintf("%s=%s", constants.SNYK_CLI_EXECUTABLE_PATH_ENV, execPath))
+	assert.Contains(t, snykCmd.Env, fmt.Sprintf("%s=%s", constants.SNYK_INTERNAL_CLI_EXECUTABLE_PATH_ENV, execPath))
 }
 
 func Test_extractOnlyOnce(t *testing.T) {

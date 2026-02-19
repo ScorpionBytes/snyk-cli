@@ -38,18 +38,20 @@ describe('go-bridge', () => {
   });
 
   describe('execGoCommand', () => {
-    it('rejects with GeneralCLIFailureError when SNYK_CLI_EXECUTABLE_PATH is not set', async () => {
-      delete process.env.SNYK_CLI_EXECUTABLE_PATH;
+    it('rejects with GeneralCLIFailureError when SNYK_INTERNAL_CLI_EXECUTABLE_PATH is not set', async () => {
+      delete process.env.SNYK_INTERNAL_CLI_EXECUTABLE_PATH;
 
       const err: ProblemError = await execGoCommand(['depgraph']).catch(
         (e) => e,
       );
       expect(err).toBeInstanceOf(CLI.GeneralCLIFailureError);
-      expect(err.detail).toContain('SNYK_CLI_EXECUTABLE_PATH is not set');
+      expect(err.detail).toContain(
+        'SNYK_INTERNAL_CLI_EXECUTABLE_PATH is not set',
+      );
     });
 
     it('resolves with GoCommandResult on success', async () => {
-      process.env.SNYK_CLI_EXECUTABLE_PATH = '/usr/local/bin/snyk';
+      process.env.SNYK_INTERNAL_CLI_EXECUTABLE_PATH = '/usr/local/bin/snyk';
 
       const mockProc = createMockProcess();
       jest.spyOn(childProcess, 'spawn').mockReturnValue(mockProc);
@@ -75,7 +77,7 @@ describe('go-bridge', () => {
     });
 
     it('resolves with non-zero exit code instead of rejecting', async () => {
-      process.env.SNYK_CLI_EXECUTABLE_PATH = '/usr/local/bin/snyk';
+      process.env.SNYK_INTERNAL_CLI_EXECUTABLE_PATH = '/usr/local/bin/snyk';
 
       const mockProc = createMockProcess();
       jest.spyOn(childProcess, 'spawn').mockReturnValue(mockProc);
@@ -94,7 +96,7 @@ describe('go-bridge', () => {
     });
 
     it('rejects with GeneralCLIFailureError on spawn error', async () => {
-      process.env.SNYK_CLI_EXECUTABLE_PATH = '/nonexistent/snyk';
+      process.env.SNYK_INTERNAL_CLI_EXECUTABLE_PATH = '/nonexistent/snyk';
 
       const mockProc = createMockProcess();
       jest.spyOn(childProcess, 'spawn').mockReturnValue(mockProc);
@@ -111,7 +113,7 @@ describe('go-bridge', () => {
     });
 
     it('passes cwd option to spawn', async () => {
-      process.env.SNYK_CLI_EXECUTABLE_PATH = '/usr/local/bin/snyk';
+      process.env.SNYK_INTERNAL_CLI_EXECUTABLE_PATH = '/usr/local/bin/snyk';
 
       const mockProc = createMockProcess();
       jest.spyOn(childProcess, 'spawn').mockReturnValue(mockProc);

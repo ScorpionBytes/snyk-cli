@@ -10,7 +10,7 @@ describe('go-bridge (acceptance)', () => {
   beforeEach(() => {
     process.env = { ...originalEnv };
     if (hasBinary) {
-      process.env.SNYK_CLI_EXECUTABLE_PATH = getCliBinaryPath();
+      process.env.SNYK_INTERNAL_CLI_EXECUTABLE_PATH = getCliBinaryPath();
     }
   });
 
