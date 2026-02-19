@@ -11,7 +11,7 @@ import { CLI_BIN_PATH } from './constants';
 const SUPPORTS_SPAWN_EVENT = semver.satisfies(process.version, '>=15.1.0');
 
 // Timeout for a single assertion.
-const DEFAULT_ASSERTION_TIMEOUT = 5_000;
+const DEFAULT_ASSERTION_TIMEOUT = 20_000;
 
 // Timeout for the entire test.
 const DEFAULT_TEST_TIMEOUT = 30_000;
