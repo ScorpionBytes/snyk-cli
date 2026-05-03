@@ -113,7 +113,7 @@
     "p-map": "^4.0.0",
     "proxy-from-env": "^1.0.0",
     "rimraf": "^2.6.3",
-    "semver": "^6.0.0",
+    "semver": "^7.7.4",
     "snyk-config": "^5.0.0",
     "snyk-cpp-plugin": "^2.24.3",
     "snyk-docker-plugin": "9.6.5",
@@ -132,7 +132,7 @@
     "snyk-swiftpm-plugin": "1.4.1",
     "strip-ansi": "^6.0.1",
     "tar": "^7.5.8",
-    "uuid": "^8.3.2",
+    "uuid": "^14.0.0",
     "wrap-ansi": "^5.1.0"
   },
   "devDependencies": {
