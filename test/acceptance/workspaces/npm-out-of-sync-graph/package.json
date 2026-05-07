@@ -9,15 +9,15 @@
   "author": "",
   "license": "ISC",
   "dependencies": {
-    "debug": "4.1.0",
+    "debug": "4.4.3",
     "undefsafe": "^1.0.0",
     "aws-sdk": "^2.224.1",
-    "axios": "^0.18.0",
+    "axios": "^0.31.1",
     "bignumber.js": "^7.2.1",
     "body-parser": "^1.18.2"
   },
   "devDependencies": {
     "eslint": "5.9.0",
-    "ava": "^0.25.0"
+    "ava": "^8.0.0"
   }
 }
