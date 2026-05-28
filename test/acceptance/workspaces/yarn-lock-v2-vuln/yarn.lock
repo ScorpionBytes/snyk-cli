@@ -5,10 +5,10 @@ __metadata:
   version: 6
   cacheKey: 8
 
-"lodash@npm:4.17.0":
-  version: 4.17.0
-  resolution: "lodash@npm:4.17.0"
-  checksum: 063b9c6f6057d616033b3d201a09982bb849d38decffc2067ce1121917761d910d376c85f12a1c7b5367a16f76fa0e9f3ea9b3edb3bc34d0ad5de1eec8fe25c4
+"lodash@npm:4.18.1":
+  version: 4.18.1
+  resolution: "lodash@npm:4.18.1"
+  checksum: bb5f5b49aad29614e709af02b64c56b0f8b78c6a81434a3c1ae527d2f0f78ca08f9d9fb22aa825a053876c9d2166e9c01f31c356014b5e2bdc0556c057433102
   languageName: node
   linkType: hard
 
@@ -16,6 +16,6 @@ __metadata:
   version: 0.0.0-use.local
   resolution: "yarn-3-vuln@workspace:."
   dependencies:
-    lodash: 4.17.0
+    lodash: 4.18.1
   languageName: unknown
   linkType: soft
