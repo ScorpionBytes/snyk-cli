@@ -112,7 +112,7 @@
     "p-map": "^4.0.0",
     "proxy-from-env": "^2.1.0",
     "rimraf": "^2.6.3",
-    "semver": "^6.0.0",
+    "semver": "^7.8.1",
     "snyk-config": "^5.0.0",
     "snyk-cpp-plugin": "^2.24.3",
     "snyk-docker-plugin": "9.7.0",
