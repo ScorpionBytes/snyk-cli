@@ -9,6 +9,6 @@
     "test": "node -e \"require('./index.js'); console.log('ok')\""
   },
   "dependencies": {
-    "minimist": "1.2.0"
+    "minimist": "1.2.8"
   }
 }
